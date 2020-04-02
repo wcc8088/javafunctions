@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Base64;
 import java.util.Optional;
 
 import com.microsoft.azure.functions.ExecutionContext;
@@ -21,6 +20,7 @@ import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.specialized.BlockBlobClient;
 import com.azure.storage.common.StorageSharedKeyCredential;
 import org.apache.commons.fileupload.MultipartStream;
+import org.apache.log4j.BasicConfigurator;
 
 /**
  * Azure Functions with HTTP Trigger.
@@ -38,6 +38,8 @@ public class ImageUpload {
         String contentType = request.getHeaders().get("content-type"); // Get content-type header
         // here the "content-type" must be lower-case
         String body = request.getBody().get(); // Get request body
+
+        BasicConfigurator.configure();
         InputStream in = new ByteArrayInputStream(body.getBytes()); // Convert body to an input stream
         String boundary = contentType.split(";")[1].split("=")[1]; // Get boundary from content-type header
         int bufSize = 1024;
@@ -47,31 +49,42 @@ public class ImageUpload {
         String accountName = "wooccstorage";
         String accountKey = "qRM2Cpcx8AuQkJiVHFaXIAeix5TVgBaAQ/yD9OfZyloVzZKjX6gH154zB4jS6900OPBeZ6mP3tw7yjWJgB4NKw==";
         StorageSharedKeyCredential credential = new StorageSharedKeyCredential(accountName, accountKey);
-        BlobServiceClient storageClient = new BlobServiceClientBuilder().endpoint("https://wooccstorage.storage.windows.net").credential(credential).buildClient();
-        BlobContainerClient blobContainerClient = storageClient.getBlobContainerClient("$web");
+        BlobServiceClient storageClient = new BlobServiceClientBuilder().endpoint("https://wooccstorage.blob.core.windows.net/").credential(credential).buildClient();
+        BlobContainerClient blobContainerClient = storageClient.getBlobContainerClient("www");
         BlockBlobClient blobClient = blobContainerClient.getBlobClient("han.jpeg").getBlockBlobClient();
         
-        while(nextPart) {
-            String header = multipartStream.readHeaders();
-            context.getLogger().info("Stream Start");
-            context.getLogger().info("Headers:");
-            context.getLogger().info(header);
-            context.getLogger().info("Body:");
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            multipartStream.readBodyData(baos);
-            String content = baos.toString();
-            context.getLogger().info("Size :"+content.length()+".");
-//          context.getLogger().info("Content :"+content+".");
-            if (header.indexOf("Content-Disposition: form-data; name=\"upfile\"") >= 0) {
-                InputStream dataStream = new ByteArrayInputStream(baos.toByteArray());
-                blobClient.upload(dataStream, baos.size());
-                dataStream.close();
-                // To upload image byte array to Blob Storage
-                // You can get the upload image filename from the form input `note`, please notes the order of form input elements.
+        try{
+            while(nextPart) {
+                String header = multipartStream.readHeaders();
+                context.getLogger().info("Stream Start");
+                context.getLogger().info("Headers:");
+                context.getLogger().info(header);
+                context.getLogger().info("Body:");
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                multipartStream.readBodyData(baos);
+                byte[] byteArray = null;
+                byteArray = baos.toByteArray();
+
+                if (header.indexOf("Content-Disposition: form-data; name=\"upfile\"") >= 0) {
+                    context.getLogger().info("Filename : " + header.substring(header.indexOf("filename")+10, header.length()-3));
+                    context.getLogger().info("BAOS Size : " + baos.size());
+                    ByteArrayInputStream inputstream = new ByteArrayInputStream(byteArray);
+                    blobClient.upload(inputstream, byteArray.length);
+                    baos.flush();
+                    context.getLogger().info("Blob name : " + blobClient.getBlobName());
+                    baos.close();
+                    inputstream.close();
+                    // To upload image byte array to Blob Storage
+                    // You can get the upload image filename from the form input `note`, please notes the order of form input elements.
+                }
+                context.getLogger().info("Stream End");
+                nextPart = multipartStream.readBoundary();
             }
-            context.getLogger().info("Stream End");
-            nextPart = multipartStream.readBoundary();
+        } catch (Exception exception)
+        {
+            context.getLogger().info("Exception : " + exception);
         }
+
         return request.createResponseBuilder(HttpStatus.OK).body("Success").build();
     }
 }
