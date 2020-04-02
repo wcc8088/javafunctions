@@ -1,0 +1,20 @@
+<form method="POST" enctype="multipart/form-data" action="http://localhost:7071/api/ImageUpload">
+  File to upload: <input type="file" name="upfile" id="fileup"><br/>
+  Notes about the file: <input type="text" name="note"><br/>
+  <input type="hidden" name="file_base64" id="file_base64"><br/>
+  <input type="submit" value="Press"> to upload the file!
+</form>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">/script>
+<script>
+$(document).ready(function(){
+    $("#fileup").change(function(){
+        var v = $(this).val();
+        var reader = new FileReader();
+        reader.readAsDataURL(this.files[0]);
+        reader.onload = function(e){
+            console.log(e.target.result);
+            $('#file_base64').val(e.target.result);
+        };
+    });
+});
+</script>
