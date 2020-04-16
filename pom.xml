@@ -75,12 +75,23 @@
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-storage-blob</artifactId>
-            <version>12.4.0</version>
+            <version>12.6.0</version>
         </dependency>
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency> 
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.28</version>
         </dependency>
 
         <!-- Test -->
@@ -147,12 +158,6 @@
                         <!-- <serverId></serverId> -->
                         <!-- <registryUrl></registryUrl>  -->
                     </runtime>
-                    <appSettings>
-                        <property>
-                            <name>FUNCTIONS_EXTENSION_VERSION</name>
-                            <value>~3</value>
-                        </property>
-                    </appSettings>
                 </configuration>
                 <executions>
                     <execution>
