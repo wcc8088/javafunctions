@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.security.Timestamp;
 import java.util.Optional;
 
 import com.microsoft.azure.functions.ExecutionContext;
@@ -59,13 +60,15 @@ public class AzureFaceImage {
         MultipartStream multipartStream = new MultipartStream(in, boundary.getBytes(), bufSize, null); 
         boolean nextPart = multipartStream.skipPreamble();
         String filename = null;
+        String blobname = null;
+        long now = System.currentTimeMillis();
         
         try{
             CloudStorageAccount account = CloudStorageAccount.parse(storageConnectionString);
             CloudBlobClient serviceClient = account.createCloudBlobClient();
 
             // Container name must be lower case.
-            CloudBlobContainer container = serviceClient.getContainerReference("www");
+            CloudBlobContainer container = serviceClient.getContainerReference("upload");
             container.createIfNotExists();
 
             while(nextPart) {
@@ -83,8 +86,9 @@ public class AzureFaceImage {
                     filename = header.substring(header.indexOf("filename=") + "filename=".length() + 1, header.indexOf("\r\n") - 1);
                     context.getLogger().info("Filename : " + filename);
                     context.getLogger().info("BAOS Size : " + baos.size());
+                    blobname = filename+"_"+now;
 
-                    CloudBlockBlob blob = container.getBlockBlobReference(filename);
+                    CloudBlockBlob blob = container.getBlockBlobReference(blobname);
                     ByteArrayInputStream inputstream = new ByteArrayInputStream(byteArray);
                     blob.upload(inputstream, byteArray.length);
                     baos.flush();
@@ -124,11 +128,12 @@ public class AzureFaceImage {
             postRequest.setHeader("Ocp-Apim-Subscription-Key", subscriptionKey);
 
             // Request body.
-            StringEntity reqEntity = new StringEntity("{\"url\":\"https://wooccstorage.blob.core.windows.net/www/" + filename + "\"}");
+            StringEntity reqEntity = new StringEntity("{\"url\":\"https://wooccstorage.blob.core.windows.net/upload/" + blobname + "\"}");
             postRequest.setEntity(reqEntity);
 
             // Execute the REST API call and get the response entity.
             HttpResponse postResponse = httpclient.execute(postRequest);
+            postResponse.addHeader("Content-Type", "application/json");
             HttpEntity entity = postResponse.getEntity();
 
             if (entity != null)
