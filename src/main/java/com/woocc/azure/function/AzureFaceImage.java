@@ -86,7 +86,7 @@ public class AzureFaceImage {
                     filename = header.substring(header.indexOf("filename=") + "filename=".length() + 1, header.indexOf("\r\n") - 1);
                     context.getLogger().info("Filename : " + filename);
                     context.getLogger().info("BAOS Size : " + baos.size());
-                    blobname = filename+"_"+now;
+                    blobname = filename.replaceFirst("[.]", "_"+now+".");
 
                     CloudBlockBlob blob = container.getBlockBlobReference(blobname);
                     ByteArrayInputStream inputstream = new ByteArrayInputStream(byteArray);
@@ -133,7 +133,6 @@ public class AzureFaceImage {
 
             // Execute the REST API call and get the response entity.
             HttpResponse postResponse = httpclient.execute(postRequest);
-            postResponse.addHeader("Content-Type", "application/json");
             HttpEntity entity = postResponse.getEntity();
 
             if (entity != null)
@@ -166,6 +165,7 @@ public class AzureFaceImage {
         if (filename == null) {
             return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Please pass a name on the query string or in the request body").build();
         } else {
+            request.createResponseBuilder(HttpStatus.OK).header("Content-Type", "application/json");
             return request.createResponseBuilder(HttpStatus.OK).body(html.toString()).build();
         }
     }
