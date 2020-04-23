@@ -17,7 +17,7 @@ public class AzureBlobFunction {
      * 2. curl {your host}/api/hello?name=HTTP%20Query
      */
     @FunctionName("putTextToBlobHttp")
-    @StorageAccount("DefaultEndpointsProtocol=http;AccountName=wooccstorage;AccountKey=qRM2Cpcx8AuQkJiVHFaXIAeix5TVgBaAQ/yD9OfZyloVzZKjX6gH154zB4jS6900OPBeZ6mP3tw7yjWJgB4NKw==;EndpointSuffix=blob.core.windows.net")
+    @StorageAccount("Storage_Account_Connection_String")
     @BlobOutput(name = "$return", path = "www/{name}")
     public String readName(
     @HttpTrigger(name = "req", 
@@ -31,7 +31,7 @@ public class AzureBlobFunction {
     
     /*
     @FunctionName("getBlobSizeHttp")
-    @StorageAccount("DefaultEndpointsProtocol=http;AccountName=wooccstorage;AccountKey=qRM2Cpcx8AuQkJiVHFaXIAeix5TVgBaAQ/yD9OfZyloVzZKjX6gH154zB4jS6900OPBeZ6mP3tw7yjWJgB4NKw==;EndpointSuffix=blob.core.windows.net")
+    @StorageAccount("Storage_Account_Connection_String")
     public HttpResponseMessage blobSize(
         @HttpTrigger(name = "req", 
         methods = {HttpMethod.GET}, 
