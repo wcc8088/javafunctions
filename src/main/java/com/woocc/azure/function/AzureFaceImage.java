@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.security.Timestamp;
 import java.util.Optional;
 
 import com.microsoft.azure.functions.ExecutionContext;
@@ -62,13 +61,14 @@ public class AzureFaceImage {
         String filename = null;
         String blobname = null;
         long now = System.currentTimeMillis();
-        
+        CloudBlobContainer container = null;
+
         try{
             CloudStorageAccount account = CloudStorageAccount.parse(storageConnectionString);
             CloudBlobClient serviceClient = account.createCloudBlobClient();
 
             // Container name must be lower case.
-            CloudBlobContainer container = serviceClient.getContainerReference("upload");
+            container = serviceClient.getContainerReference("upload");
             container.createIfNotExists();
 
             while(nextPart) {
@@ -154,6 +154,9 @@ public class AzureFaceImage {
                     context.getLogger().info(jsonString);
                     html.append(jsonString);
                 }
+                blobname = blobname.substring(0,blobname.indexOf('.')) + ".json";
+                CloudBlockBlob blob = container.getBlockBlobReference(blobname);
+                blob.uploadText(html.toString());
             }
         }
         catch (Exception e)
