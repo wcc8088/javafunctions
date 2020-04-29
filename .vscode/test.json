@@ -1,0 +1,89 @@
+[
+    {
+        "faceRectangle": {
+            "top": 133,
+            "left": 273,
+            "width": 56,
+            "height": 56
+        },
+        "faceAttributes": {
+            "makeup": {
+                "eyeMakeup": true,
+                "lipMakeup": true
+            },
+            "facialHair": {
+                "sideburns": 0,
+                "beard": 0,
+                "moustache": 0
+            },
+            "gender": "female",
+            "accessories": [],
+            "blur": {
+                "blurLevel": "low",
+                "value": 0.06
+            },
+            "headPose": {
+                "roll": 11.5,
+                "pitch": -0.2,
+                "yaw": 11.5
+            },
+            "smile": 0.001,
+            "glasses": "NoGlasses",
+            "hair": {
+                "bald": 0.02,
+                "invisible": false,
+                "hairColor": [
+                    {
+                        "color": "black",
+                        "confidence": 1
+                    },
+                    {
+                        "color": "gray",
+                        "confidence": 0.68
+                    },
+                    {
+                        "color": "other",
+                        "confidence": 0.62
+                    },
+                    {
+                        "color": "brown",
+                        "confidence": 0.55
+                    },
+                    {
+                        "color": "blond",
+                        "confidence": 0.01
+                    },
+                    {
+                        "color": "red",
+                        "confidence": 0
+                    }
+                ]
+            },
+            "emotion": {
+                "contempt": 0,
+                "surprise": 0,
+                "happiness": 0.001,
+                "neutral": 0.998,
+                "sadness": 0,
+                "disgust": 0,
+                "anger": 0,
+                "fear": 0
+            },
+            "exposure": {
+                "value": 0.52,
+                "exposureLevel": "goodExposure"
+            },
+            "occlusion": {
+                "eyeOccluded": false,
+                "mouthOccluded": false,
+                "foreheadOccluded": false
+            },
+            "noise": {
+                "noiseLevel": "low",
+                "value": 0.19
+            },
+            "age": 23
+        },
+        "faceId": "9b847643-6342-47e0-979e-c7c63781a2e7"
+    }
+]
