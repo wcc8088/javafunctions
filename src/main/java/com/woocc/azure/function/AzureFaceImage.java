@@ -1,11 +1,12 @@
 package com.woocc.azure.function;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Optional;
-import java.util.Set;
 
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.HttpMethod;
@@ -20,6 +21,7 @@ import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 
+import org.apache.commons.fileupload.MultipartStream;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -43,15 +45,26 @@ public class AzureFaceImage {
      */
     @FunctionName("FaceImage")
 	public HttpResponseMessage run(@HttpTrigger(name = "req", methods = {
-			HttpMethod.GET }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<byte[]>> request,
+			HttpMethod.POST }, authLevel = AuthorizationLevel.ANONYMOUS) HttpRequestMessage<Optional<byte[]>> request,
 			final ExecutionContext context) throws IOException {
         final String storageConnectionString ="DefaultEndpointsProtocol=http;AccountName=wooccstorage;AccountKey=qRM2Cpcx8AuQkJiVHFaXIAeix5TVgBaAQ/yD9OfZyloVzZKjX6gH154zB4jS6900OPBeZ6mP3tw7yjWJgB4NKw==";
+        final byte[] body = request.getBody().orElseThrow(() -> new IllegalArgumentException("No content attached"));
+        final String contentType = request.getHeaders().get("content-type");
         final String subscriptionKey = "35f6122e6c324d569c6273e2c2952b50";
         final String uriBase = "https://eastasia.api.cognitive.microsoft.com/face/v1.0/detect";
 
         BasicConfigurator.configure();
+        InputStream in = new ByteArrayInputStream(body); // Convert body to an input stream
+        String boundary = contentType.split(";")[1].split("=")[1]; // Get boundary from content-type header
+        int bufSize = 1024;
+        MultipartStream multipartStream = new MultipartStream(in, boundary.getBytes(), bufSize, null); 
+        boolean nextPart = multipartStream.skipPreamble();
+        
         String filename = request.getQueryParameters().get("filename");
         String blobname = null;
+        String jsonname = null;
+        
+        long now = System.currentTimeMillis();
         CloudBlobContainer container = null;
         context.getLogger().info("filename : " + filename);
 
@@ -62,6 +75,36 @@ public class AzureFaceImage {
             // Container name must be lower case.
             container = serviceClient.getContainerReference("upload");
             container.createIfNotExists();
+            while(nextPart) {
+                String header = multipartStream.readHeaders();
+                context.getLogger().info("Stream Start");
+                context.getLogger().info("Headers:");
+                context.getLogger().info(header);
+                context.getLogger().info("Body:");
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                multipartStream.readBodyData(baos);
+                byte[] byteArray = null;
+                byteArray = baos.toByteArray();
+
+                if (header.indexOf("Content-Disposition: form-data; name=\"upfile\"") >= 0) {
+                    filename = header.substring(header.indexOf("filename=") + "filename=".length() + 1, header.indexOf("\r\n") - 1);
+                    context.getLogger().info("Filename : " + filename);
+                    context.getLogger().info("BAOS Size : " + baos.size());
+                    blobname = filename.replaceFirst("[.]", "_"+now+".");
+
+                    CloudBlockBlob blob = container.getBlockBlobReference(blobname);
+                    ByteArrayInputStream inputstream = new ByteArrayInputStream(byteArray);
+                    blob.upload(inputstream, byteArray.length);
+                    baos.flush();
+                    context.getLogger().info("Blob name : " + blob.getName());
+                    baos.close();
+                    inputstream.close();
+                    // To upload image byte array to Blob Storage
+                    // You can get the upload image filename from the form input `note`, please notes the order of form input elements.
+                }
+                context.getLogger().info("Stream End");
+                nextPart = multipartStream.readBoundary();
+            }
 
         } catch (Exception exception)
         {
@@ -90,13 +133,12 @@ public class AzureFaceImage {
             postRequest.setHeader("Ocp-Apim-Subscription-Key", subscriptionKey);
 
             // Request body.
-            StringEntity reqEntity = new StringEntity("{\"url\":\"https://wooccstorage.blob.core.windows.net/upload/" + filename + "\"}");
+            StringEntity reqEntity = new StringEntity("{\"url\":\"https://wooccstorage.blob.core.windows.net/upload/" + blobname + "\"}");
             postRequest.setEntity(reqEntity);
 
             // Execute the REST API call and get the response entity.
             HttpResponse postResponse = httpclient.execute(postRequest);
             HttpEntity entity = postResponse.getEntity();
-            HashMap<String,String> map = new HashMap<String,String>();
             
             if (entity != null)
             {
@@ -117,8 +159,8 @@ public class AzureFaceImage {
                     context.getLogger().info(jsonString);
                     html.append(jsonString);
                 }
-                blobname = filename.substring(0,filename.indexOf('.')) + ".json";
-                CloudBlockBlob blob = container.getBlockBlobReference(blobname);
+                jsonname = blobname.substring(0,blobname.indexOf('.')) + ".json";
+                CloudBlockBlob blob = container.getBlockBlobReference(jsonname);
                 blob.uploadText(html.toString());
             }
         }
