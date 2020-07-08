@@ -173,8 +173,10 @@ public class AzureFaceImage {
         if (filename == null) {
             return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Please pass a name on the query string or in the request body").build();
         } else {
-            request.createResponseBuilder(HttpStatus.OK).header("Content-Type", "application/json");
-            return request.createResponseBuilder(HttpStatus.OK).body(html.toString()).build();
+            HttpResponseMessage.Builder builder = request.createResponseBuilder(HttpStatus.OK);
+            builder = builder.header("Content-Type", "application/json; charset=utf-8");
+            builder = builder.body(html.toString());
+            return builder.build();
         }
     }
 }
