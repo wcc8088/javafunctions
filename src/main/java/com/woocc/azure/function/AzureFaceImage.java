@@ -120,9 +120,10 @@ public class AzureFaceImage {
             URIBuilder builder = new URIBuilder(uriBase);
 
             // Request parameters. All of them are optional.
+	    // emotion, gender, age, smile, facial hair, hair and makeup 
             builder.setParameter("returnFaceId", "true");
             builder.setParameter("returnFaceLandmarks", "false");
-            builder.setParameter("returnFaceAttributes", "age,gender,headPose,smile,facialHair,glasses,emotion,hair,makeup,occlusion,accessories,blur,exposure,noise");
+            builder.setParameter("returnFaceAttributes", "headPose,glasses,occlusion,accessories,blur,exposure,noise");
 
             // Prepare the URI for the REST API call.
             URI uri = builder.build();
